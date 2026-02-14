@@ -16,7 +16,13 @@ class Repositories {
   factory Repositories.init() {
 
     final IOBackendRepository ioBackendRepository;
-
+    if (Platform.isLinux) {
+      ioBackendRepository = const LinuxIOBackendRepository();
+    } else {
+      throw UnsupportedError(
+        'Unsupported platform: ${Platform.operatingSystem}. '
+      );
+    }
 
     _instance = Repositories._(
       ioBackendRepository: ioBackendRepository,
