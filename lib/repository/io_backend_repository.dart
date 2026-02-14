@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flasher/io_writer.dart';
+import 'package:flasher/flasher/io_writer.dart';
 import 'package:flasher/models/target_disk.dart';
 
 abstract interface class IOBackendRepository {
@@ -61,14 +61,18 @@ class LinuxIOBackendRepository implements IOBackendRepository {
       final sanitizedDeviceSize = await File(
         '${device.path}/size',
       ).readAsString();
-      final deviceSize = int.parse(sanitizedDeviceSize);
-      final deviceModel = await File(
+      // /sys/bloc/<dev>/size reports number of 512 byte sectors
+      final deviceSize = int.parse(sanitizedDeviceSize)*512; 
+
+      final deviceModel = (await File(
         '${device.path}/device/model',
-      ).readAsString();
+      ).readAsString()).trim();
+
+      final deviceNode = '/dev/${device.path.split('/').last}';
 
       targetDisks.add(
         TargetDisk(
-          path: device.path,
+          path: deviceNode,
           devname: deviceName,
           size: deviceSize,
           model: deviceModel,
