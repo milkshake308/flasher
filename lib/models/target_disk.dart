@@ -1,3 +1,5 @@
+import 'package:flasher/flasher/utils.dart';
+
 class TargetDisk {
   final String path;
   final String devname;
@@ -10,4 +12,8 @@ class TargetDisk {
     required this.size,
     required this.model,
   });
+
+  String get prettySize {
+    return prettifyByteSize(size);
+  }
 }
