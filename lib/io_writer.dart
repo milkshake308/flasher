@@ -3,17 +3,17 @@ import 'dart:io';
 
 typedef IOWritterFinalize = Future<void> Function();
 
-class IOWritter {
+class IOWriter {
   final IOSink _inner;
   final IOWritterFinalize _finalize;
 
-  IOWritter._(this._inner, this._finalize);
+  IOWriter._(this._inner, this._finalize);
 
-  factory IOWritter.withFinalizer({
+  factory IOWriter.withFinalizer({
     required IOSink sink,
     required IOWritterFinalize finalizer,
   }) {
-    return IOWritter._(sink, finalizer);
+    return IOWriter._(sink, finalizer);
   }
 
 
