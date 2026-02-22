@@ -1,6 +1,8 @@
+import 'package:file_selector/file_selector.dart';
 import 'package:flasher/models/target_disk.dart';
 import 'package:flasher/repository/repositories.dart';
 import 'package:flasher/widgets/disk_selection_section.dart';
+import 'package:flasher/widgets/image_file_picker_section.dart';
 import 'package:flutter/material.dart';
 
 class FlasherApp extends StatefulWidget {
@@ -15,6 +17,15 @@ class _FlasherAppState extends State<FlasherApp> {
       .ioBackendRepository
       .enumerateTargetDisks();
   TargetDisk? _selectedDisk;
+  String? _selectedImageFile;
+
+  Future<XFile?> pickImageFile() async {
+    const XTypeGroup imageGroup = XTypeGroup(
+      label: 'Disk image',
+      extensions: <String>['img', 'iso', 'bin', 'raw'],
+    );
+    return await openFile(acceptedTypeGroups: const <XTypeGroup>[imageGroup]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +48,17 @@ class _FlasherAppState extends State<FlasherApp> {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  ImageFilePickerSection(
+                    selectedImagePath: _selectedImageFile,
+                    onBrowsePressed: () async {
+                      final imagePath = await pickImageFile();
+                      if (!mounted) return;
+                      setState(() {
+                        _selectedImageFile = imagePath?.path;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
                   Expanded(
                     child: DiskSelectionSection(
                       targetDisksFuture: _targetDisksFuture,
