@@ -14,13 +14,12 @@ class Repositories {
   });
 
   factory Repositories.init() {
-
     final IOBackendRepository ioBackendRepository;
     if (Platform.isLinux) {
       ioBackendRepository = const LinuxIOBackendRepository();
     } else {
       throw UnsupportedError(
-        'Unsupported platform: ${Platform.operatingSystem}. '
+        'Unsupported platform: ${Platform.operatingSystem}. ',
       );
     }
 
@@ -33,9 +32,10 @@ class Repositories {
 
   factory Repositories() {
     if (_instance == null) {
-      throw Exception('Repositories not initialized, call Repositories.init() first');
+      throw Exception(
+        'Repositories not initialized, call Repositories.init() first',
+      );
     }
     return _instance!;
   }
-
 }

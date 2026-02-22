@@ -15,9 +15,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF0D5C63),
-      ),
+      theme: ThemeData(colorSchemeSeed: const Color(0xFF0D5C63)),
       home: const FlasherApp(),
     );
   }

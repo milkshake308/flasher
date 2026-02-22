@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flasher/models/user_file.dart';
 
 class UserFileRepository {
-
   const UserFileRepository();
 
   UserFile fromFile(File file) {

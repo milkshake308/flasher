@@ -51,10 +51,11 @@ class LinuxIOBackendRepository implements IOBackendRepository {
     final List<TargetDisk> targetDisks = [];
 
     for (final device in devices) {
-
       // Filter out devices we dont care about
       final deviceName = device.path.split('/').last;
-      if (!sysFsRealDiskPrefixes.any((prefix) => deviceName.startsWith(prefix))) {
+      if (!sysFsRealDiskPrefixes.any(
+        (prefix) => deviceName.startsWith(prefix),
+      )) {
         continue;
       }
 
@@ -62,7 +63,7 @@ class LinuxIOBackendRepository implements IOBackendRepository {
         '${device.path}/size',
       ).readAsString();
       // /sys/bloc/<dev>/size reports number of 512 byte sectors
-      final deviceSize = int.parse(sanitizedDeviceSize)*512; 
+      final deviceSize = int.parse(sanitizedDeviceSize) * 512;
 
       final deviceModel = (await File(
         '${device.path}/device/model',

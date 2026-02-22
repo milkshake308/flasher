@@ -4,12 +4,9 @@ class UserFile {
   final int size;
   final String path;
 
-  const UserFile({
-    required this.size,
-    required this.path,
-  });
+  const UserFile({required this.size, required this.path});
 
   String get prettySize {
-    return prettifyByteSize(size); 
+    return prettifyByteSize(size);
   }
 }
