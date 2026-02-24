@@ -2,6 +2,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flasher/models/target_disk.dart';
 import 'package:flasher/repository/repositories.dart';
 import 'package:flasher/widgets/disk_selection_section.dart';
+import 'package:flasher/widgets/flash_action_section.dart';
 import 'package:flasher/widgets/image_file_picker_section.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +19,7 @@ class _FlasherAppState extends State<FlasherApp> {
       .enumerateTargetDisks();
   TargetDisk? _selectedDisk;
   String? _selectedImageFile;
+  bool _canflash = false;
 
   Future<XFile?> pickImageFile() async {
     const XTypeGroup imageGroup = XTypeGroup(
@@ -55,6 +57,12 @@ class _FlasherAppState extends State<FlasherApp> {
                       if (!mounted) return;
                       setState(() {
                         _selectedImageFile = imagePath?.path;
+
+                        _canflash =
+                            (_selectedImageFile != null &&
+                                _selectedDisk != null)
+                            ? true
+                            : false;
                       });
                     },
                   ),
@@ -66,10 +74,18 @@ class _FlasherAppState extends State<FlasherApp> {
                       onTargetDiskTap: (targetDisk) {
                         setState(() {
                           _selectedDisk = targetDisk;
+
+                          _canflash =
+                              (_selectedImageFile != null &&
+                                  _selectedDisk != null)
+                              ? true
+                              : false;
                         });
                       },
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  FlashActionSection(canFlash: _canflash, onPress: () {}),
                 ],
               ),
             ),
