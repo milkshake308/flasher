@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 
 void main() {
   // Initialize repository
-  Repositories.init();
+  final repositories = Repositories.init();
 
-  runApp(const MainApp());
+  runApp(
+    RepositoriesProvider(
+      repositories: repositories, 
+      child: const MainApp()
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
