@@ -6,6 +6,7 @@ import 'package:flasher/service.dart';
 import 'package:flasher/widgets/disk_selection_section.dart';
 import 'package:flasher/widgets/flash_action_section.dart';
 import 'package:flasher/widgets/image_file_picker_section.dart';
+import 'package:flasher/widgets/lockable_section.dart';
 import 'package:flutter/material.dart';
 
 class FlasherApp extends StatefulWidget {
@@ -21,7 +22,7 @@ class _FlasherAppState extends State<FlasherApp> {
       .enumerateTargetDisks();
   TargetDisk? _selectedDisk;
   UserFile? _selectedImageFile;
-  bool _canflash = false;
+  bool _isFlashing = false;
 
   Future<XFile?> pickImageFile() async {
     const XTypeGroup imageGroup = XTypeGroup(
@@ -35,6 +36,9 @@ class _FlasherAppState extends State<FlasherApp> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final services = FlashService(repositories: Repositories.Of(context));
+    final canFlash = !_isFlashing &&
+        _selectedImageFile != null &&
+        _selectedDisk != null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Flasher')),
@@ -53,65 +57,61 @@ class _FlasherAppState extends State<FlasherApp> {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  ImageFilePickerSection(
-                    selectedImagePath: (_selectedImageFile != null)
-                        ? _selectedImageFile!.path
-                        : null,
-                    onBrowsePressed: () async {
-                      final imagePath = await pickImageFile();
+                  LockableSection(
+                    locked: _isFlashing,
+                    child: ImageFilePickerSection(
+                      selectedImagePath: (_selectedImageFile != null)
+                          ? _selectedImageFile!.path
+                          : null,
+                      onBrowsePressed: () async {
+                        final imagePath = await pickImageFile();
 
-                      final UserFile? imageFile = (imagePath != null)
-                          ? UserFile(
-                              path: imagePath.path,
-                              size: await imagePath.length(),
-                            )
-                          : null;
+                        final UserFile? imageFile = (imagePath != null)
+                            ? UserFile(
+                                path: imagePath.path,
+                                size: await imagePath.length(),
+                              )
+                            : null;
 
-                      if (!mounted) return;
-                      setState(() {
-                        if (imageFile != null) {
-                          _selectedImageFile = imageFile;
-                        }
-
-                        _canflash =
-                            (_selectedImageFile != null &&
-                                _selectedDisk != null)
-                            ? true
-                            : false;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: DiskSelectionSection(
-                      targetDisksFuture: _targetDisksFuture,
-                      selectedDisk: _selectedDisk,
-                      onTargetDiskTap: (targetDisk) {
+                        if (!mounted) return;
                         setState(() {
-                          _selectedDisk = targetDisk;
-
-                          _canflash =
-                              (_selectedImageFile != null &&
-                                  _selectedDisk != null)
-                              ? true
-                              : false;
+                          if (imageFile != null) {
+                            _selectedImageFile = imageFile;
+                          }
                         });
                       },
                     ),
                   ),
                   const SizedBox(height: 12),
+                  Expanded(
+                    child: LockableSection(
+                      locked: _isFlashing,
+                      child: DiskSelectionSection(
+                        targetDisksFuture: _targetDisksFuture,
+                        selectedDisk: _selectedDisk,
+                        onTargetDiskTap: (targetDisk) {
+                          setState(() {
+                            _selectedDisk = targetDisk;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   FlashActionSection(
-                    canFlash: _canflash,
+                    canFlash: canFlash,
+                    isFlashing: _isFlashing,
                     onPress: () async {
                       setState(() {
-                        _canflash = false;
+                        _isFlashing = true;
                       });
                       await services.flashDisk(
                         _selectedImageFile!,
                         _selectedDisk!,
                       );
+                      if (!mounted) return;
                       setState(() {
-                        _canflash = true;
+                        _isFlashing = false;
                       });
                     },
                   ),
