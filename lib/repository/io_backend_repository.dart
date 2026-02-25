@@ -5,12 +5,11 @@ import 'package:flasher/flasher/io_writer.dart';
 import 'package:flasher/models/target_disk.dart';
 
 abstract interface class IOBackendRepository {
-  Future<IOWriter> createIoWriter(TargetDisk targetDisk);
+  Future<IOWriter> createIoWriter(TargetDisk targetDisk, int blockSize);
   Future<List<TargetDisk>> enumerateTargetDisks();
 }
 
 class LinuxIOBackendRepository implements IOBackendRepository {
-  final int chunkSize;
 
   static const sysFsRealDiskPrefixes = {
     "sd",
@@ -18,13 +17,14 @@ class LinuxIOBackendRepository implements IOBackendRepository {
     "mmcblk",
   }; // SCSI, NVMe, SD/eMMC interface
 
-  const LinuxIOBackendRepository({this.chunkSize = 8 * 1024 * 1024});
+  const LinuxIOBackendRepository();
 
   @override
-  Future<IOWriter> createIoWriter(TargetDisk targetDisk) async {
+  Future<IOWriter> createIoWriter(TargetDisk targetDisk, int blockSize) async {
     final process = await Process.start('dd', [
       'of=${targetDisk.path}',
-      'bs=$chunkSize',
+      'bs=$blockSize',
+      'iflag=fullblock',
       'oflag=direct',
     ]);
 

@@ -16,7 +16,18 @@ class UserFileRepository {
     return UserFile(size: fstat.size, path: file.absolute.path);
   }
 
-  Stream<List<int>> readStream(UserFile userFile) {
-    return File(userFile.path).openRead();
+  Stream<List<int>> readStream(UserFile userFile, int chunkSize) async* {
+    final source = await File(userFile.path).open();
+
+    try {
+      while (true) {
+        final chunk = await source.read(chunkSize);
+        if (chunk.isEmpty) break;
+        yield chunk;
+      }
+    } finally {
+      source.close();
+    }
+
   }
 }

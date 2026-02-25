@@ -7,21 +7,23 @@ import 'package:flasher/repository/repositories.dart';
 import 'package:flasher/repository/user_file_repository.dart';
 
 class FlashService {
-  final IOBackendRepository _ioBackendRepository;
-  final UserFileRepository _userFileRepository;
+  final IOBackendRepository _ioBackendRepo;
+  final UserFileRepository _fileRepo;
+
+  static const chunkSize = 4 * 1024 * 1024;
 
   FlashService({
     required Repositories repositories,
-  }) : _ioBackendRepository = repositories.ioBackendRepository,
-       _userFileRepository = repositories.userFileRepository;
+  }) : _ioBackendRepo = repositories.ioBackendRepository,
+       _fileRepo = repositories.userFileRepository;
 
   Future<void> flashDisk(
     UserFile sourceFile,
     TargetDisk destinationDisk,
   ) async {
-    final sourceStream = _userFileRepository.readStream(sourceFile);
-    final destinationWritter = await _ioBackendRepository.createIoWriter(
-      destinationDisk,
+    final sourceStream = _fileRepo.readStream(sourceFile, chunkSize);
+    final destinationWritter = await _ioBackendRepo.createIoWriter(
+      destinationDisk, chunkSize
     );
 
     // IO pump loop 
