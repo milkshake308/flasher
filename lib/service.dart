@@ -21,6 +21,11 @@ class FlashService {
     UserFile sourceFile,
     TargetDisk destinationDisk,
   ) async {
+
+    if (sourceFile.size > destinationDisk.size) {
+      throw Exception("Source image file is bigger than destination disk");
+    }
+
     final sourceStream = _fileRepo.readStream(sourceFile, chunkSize);
     final destinationWritter = await _ioBackendRepo.createIoWriter(
       destinationDisk, chunkSize
