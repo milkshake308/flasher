@@ -5,6 +5,7 @@ import 'package:flasher/repository/repositories.dart';
 import 'package:flasher/service.dart';
 import 'package:flasher/widgets/disk_selection_section.dart';
 import 'package:flasher/widgets/flash_action_section.dart';
+import 'package:flasher/widgets/flash_error_presenter.dart';
 import 'package:flasher/widgets/image_file_picker_section.dart';
 import 'package:flasher/widgets/lockable_section.dart';
 import 'package:flutter/material.dart';
@@ -36,9 +37,8 @@ class _FlasherAppState extends State<FlasherApp> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final services = FlashService(repositories: Repositories.Of(context));
-    final canFlash = !_isFlashing &&
-        _selectedImageFile != null &&
-        _selectedDisk != null;
+    final canFlash =
+        !_isFlashing && _selectedImageFile != null && _selectedDisk != null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Flasher')),
@@ -105,14 +105,24 @@ class _FlasherAppState extends State<FlasherApp> {
                       setState(() {
                         _isFlashing = true;
                       });
-                      await services.flashDisk(
-                        _selectedImageFile!,
-                        _selectedDisk!,
-                      );
-                      if (!mounted) return;
-                      setState(() {
-                        _isFlashing = false;
-                      });
+                      
+                      try {
+                        await services.flashDisk(
+                          _selectedImageFile!,
+                          _selectedDisk!,
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+                        await FlashErrorPresenter.show(
+                          context: context,
+                          title: "Flashing error",
+                          body: e.toString(),
+                        );
+                      } finally {
+                        setState(() {
+                          _isFlashing = false;
+                        });
+                      }
                     },
                   ),
                 ],
