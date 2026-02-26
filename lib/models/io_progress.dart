@@ -1,8 +1,16 @@
 class IoProgress {
-  final int current;
+  int current;
   final int total;
 
-  const IoProgress({required this.current, required this.total});
+  IoProgress({required this.current, required this.total});
 
-  int get percentage => total > 0 ? ((current / total) * 100).round() : 0;
+  double get fraction {
+    if (total <= 0 || current <= 0) {
+      return 0;
+    }
+    if (current >= total) {
+      return 1;
+    }
+    return current / total;
+  }
 }

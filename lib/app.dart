@@ -107,7 +107,8 @@ class _FlasherAppState extends State<FlasherApp> {
                       });
                       
                       try {
-                        await services.flashDisk(
+                        await for (final progress in services
+                            .flashDiskWithProgress(
                           _selectedImageFile!,
                           _selectedDisk!,
                         );

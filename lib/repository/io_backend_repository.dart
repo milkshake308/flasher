@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flasher/flasher/io_writer.dart';
+import 'package:flasher/models/errors.dart';
 import 'package:flasher/models/target_disk.dart';
 
 abstract interface class IOBackendRepository {
@@ -17,10 +18,19 @@ class LinuxIOBackendRepository implements IOBackendRepository {
     "mmcblk",
   }; // SCSI, NVMe, SD/eMMC interface
 
-  const LinuxIOBackendRepository();
+  final Set<String> lockedDisks = {};
+
+  LinuxIOBackendRepository();
 
   @override
   Future<IOWriter> createIoWriter(TargetDisk targetDisk, int blockSize) async {
+
+    if (lockedDisks.contains(targetDisk.path)) {
+      throw IoBackendRepositoryError('Target disk ${targetDisk.path} is currently locked by another operation');
+    }
+
+    lockedDisks.add(targetDisk.path);
+
     final process = await Process.start('dd', [
       'of=${targetDisk.path}',
       'bs=$blockSize',
@@ -30,9 +40,10 @@ class LinuxIOBackendRepository implements IOBackendRepository {
 
     Future<void> concludeOperation() async {
       final rc = await process.exitCode;
+      lockedDisks.remove(targetDisk.path);
       if (rc != 0) {
         final message = await process.stderr.transform(utf8.decoder).join();
-        throw Exception('copy process failed with: $message');
+        throw IoBackendRepositoryError('copy process failed with: $message');
       }
     }
 
