@@ -7,10 +7,7 @@ void main() {
   final repositories = Repositories.init();
 
   runApp(
-    RepositoriesProvider(
-      repositories: repositories, 
-      child: const MainApp()
-    ),
+    RepositoriesProvider(repositories: repositories, child: const MainApp()),
   );
 }
 

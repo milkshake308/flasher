@@ -42,8 +42,8 @@ class Repositories {
   }
 
   static Repositories of(BuildContext context) {
-    final provider =
-        context.dependOnInheritedWidgetOfExactType<RepositoriesProvider>();
+    final provider = context
+        .dependOnInheritedWidgetOfExactType<RepositoriesProvider>();
     assert(
       provider != null,
       'No RepositoriesProvider found in context. Wrap your widget tree with RepositoriesProvider.',

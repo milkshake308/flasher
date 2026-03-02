@@ -4,11 +4,7 @@ class LockableSection extends StatelessWidget {
   final bool locked;
   final Widget child;
 
-  const LockableSection({
-    super.key,
-    required this.locked,
-    required this.child,
-  });
+  const LockableSection({super.key, required this.locked, required this.child});
 
   @override
   Widget build(BuildContext context) {

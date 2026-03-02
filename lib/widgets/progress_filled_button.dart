@@ -23,9 +23,7 @@ class ProgressFilledButton extends StatelessWidget {
     return FilledButton(
       onPressed: onPressed,
       clipBehavior: Clip.hardEdge,
-      style: FilledButton.styleFrom(
-        padding: EdgeInsets.zero,
-      ),
+      style: FilledButton.styleFrom(padding: EdgeInsets.zero),
       child: SizedBox(
         height: 32,
         child: Stack(
@@ -43,11 +41,7 @@ class ProgressFilledButton extends StatelessWidget {
             Center(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon),
-                  const SizedBox(width: 8),
-                  Text(label),
-                ],
+                children: [Icon(icon), const SizedBox(width: 8), Text(label)],
               ),
             ),
           ],
