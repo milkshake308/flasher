@@ -24,6 +24,7 @@ class _FlasherAppState extends State<FlasherApp> {
   TargetDisk? _selectedDisk;
   UserFile? _selectedImageFile;
   bool _isFlashing = false;
+  double _flashProgress = 0;
 
   Future<XFile?> pickImageFile() async {
     const XTypeGroup imageGroup = XTypeGroup(
@@ -101,17 +102,27 @@ class _FlasherAppState extends State<FlasherApp> {
                   FlashActionSection(
                     canFlash: canFlash,
                     isFlashing: _isFlashing,
+                    progress: _flashProgress,
+                    label: _isFlashing
+                        ? 'Flashing ${(_flashProgress * 100).round()}%'
+                        : 'Flash Image',
                     onPress: () async {
                       setState(() {
                         _isFlashing = true;
+                        _flashProgress = 0;
                       });
-                      
+
                       try {
-                        await for (final progress in services
-                            .flashDiskWithProgress(
-                          _selectedImageFile!,
-                          _selectedDisk!,
-                        );
+                        await for (final progress
+                            in services.flashDiskWithProgress(
+                              _selectedImageFile!,
+                              _selectedDisk!,
+                            )) {
+                          if (!mounted) break;
+                          setState(() {
+                            _flashProgress = progress.fraction;
+                          });
+                        }
                       } catch (e) {
                         if (!mounted) return;
                         await FlashErrorPresenter.show(
@@ -120,9 +131,12 @@ class _FlasherAppState extends State<FlasherApp> {
                           body: e.toString(),
                         );
                       } finally {
-                        setState(() {
-                          _isFlashing = false;
-                        });
+                        if (mounted) {
+                          setState(() {
+                            _isFlashing = false;
+                            _flashProgress = 0;
+                          });
+                        }
                       }
                     },
                   ),

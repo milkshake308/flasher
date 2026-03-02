@@ -1,14 +1,19 @@
+import 'package:flasher/widgets/progress_filled_button.dart';
 import 'package:flutter/material.dart';
 
 class FlashActionSection extends StatelessWidget {
   final bool canFlash;
   final bool isFlashing;
+  final double progress;
+  final String label;
   final VoidCallback onPress;
 
   const FlashActionSection({
     super.key,
     required this.canFlash,
     required this.isFlashing,
+    required this.progress,
+    required this.label,
     required this.onPress,
   });
 
@@ -22,10 +27,12 @@ class FlashActionSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FilledButton.icon(
+            ProgressFilledButton(
               onPressed: canFlash && !isFlashing ? onPress : null,
-              icon:  const Icon(Icons.bolt_rounded),
-              label: Text(isFlashing ? 'Flashing...' : 'Flash Image'),
+              showProgress: isFlashing,
+              progress: progress,
+              icon: Icons.bolt_rounded,
+              label: label,
             ),
           ],
         ),

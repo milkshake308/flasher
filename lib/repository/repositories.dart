@@ -18,7 +18,7 @@ class Repositories {
   factory Repositories.init() {
     final IOBackendRepository ioBackendRepository;
     if (Platform.isLinux) {
-      ioBackendRepository = const LinuxIOBackendRepository();
+      ioBackendRepository = LinuxIOBackendRepository();
     } else {
       throw UnsupportedError(
         'Unsupported platform: ${Platform.operatingSystem}.',
