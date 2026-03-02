@@ -13,40 +13,39 @@ class FlashService {
 
   static const chunkSize = 4 * 1024 * 1024;
 
-  FlashService({
-    required Repositories repositories,
-  }) : _ioBackendRepo = repositories.ioBackendRepository,
-       _fileRepo = repositories.userFileRepository;
-
+  FlashService({required Repositories repositories})
+    : _ioBackendRepo = repositories.ioBackendRepository,
+      _fileRepo = repositories.userFileRepository;
 
   Stream<IoProgress> flashDiskWithProgress(
     UserFile sourceFile,
     TargetDisk destinationDisk,
   ) async* {
-
     if (sourceFile.size > destinationDisk.size) {
       throw Exception("Source image file is bigger than destination disk");
     }
 
-    final sourceStream = _fileRepo.readStream(sourceFile, chunkSize);
-    final destinationWritter = await _ioBackendRepo.createIoWriter(
-      destinationDisk, chunkSize
+    final destinationWriter = await _ioBackendRepo.createIoWriter(
+      destinationDisk,
+      chunkSize,
+    );
+    final sourceStream = _fileRepo.readStreamWithGuard(
+      sourceFile,
+      chunkSize,
+      destinationWriter.guard,
     );
 
     final progress = IoProgress(current: 0, total: sourceFile.size);
-    // IO pump loop 
     try {
       await for (final chunk in sourceStream) {
-        destinationWritter.add(chunk);
-        await destinationWritter.flush();
+        destinationWriter.add(chunk);
+        await destinationWriter.flush();
 
         progress.current += chunk.length;
         yield progress;
       }
-    } catch (e) {
-      rethrow;
     } finally {
-      await destinationWritter.finish();
+      await destinationWriter.finish();
     }
   }
 }

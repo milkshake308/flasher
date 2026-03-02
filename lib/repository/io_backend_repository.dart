@@ -11,7 +11,6 @@ abstract interface class IOBackendRepository {
 }
 
 class LinuxIOBackendRepository implements IOBackendRepository {
-
   static const sysFsRealDiskPrefixes = {
     "sd",
     "nvme",
@@ -24,9 +23,10 @@ class LinuxIOBackendRepository implements IOBackendRepository {
 
   @override
   Future<IOWriter> createIoWriter(TargetDisk targetDisk, int blockSize) async {
-
     if (lockedDisks.contains(targetDisk.path)) {
-      throw IoBackendRepositoryError('Target disk ${targetDisk.path} is currently locked by another operation');
+      throw IoBackendRepositoryError(
+        'Target disk ${targetDisk.path} is currently locked by another operation',
+      );
     }
 
     lockedDisks.add(targetDisk.path);
@@ -38,19 +38,21 @@ class LinuxIOBackendRepository implements IOBackendRepository {
       'oflag=direct',
     ]);
 
-    Future<void> concludeOperation() async {
-      final rc = await process.exitCode;
-      lockedDisks.remove(targetDisk.path);
-      if (rc != 0) {
-        final message = await process.stderr.transform(utf8.decoder).join();
-        throw IoBackendRepositoryError('copy process failed with: $message');
-      }
-    }
+    final stderrOutput = process.stderr.transform(utf8.decoder).join();
 
-    return IOWriter.withFinalizer(
-      sink: process.stdin,
-      finalizer: concludeOperation,
-    );
+    final guard = () async {
+      try {
+        final rc = await process.exitCode;
+        if (rc != 0) {
+          final message = (await stderrOutput).trim();
+          throw IoBackendRepositoryError('copy process failed with: $message');
+        }
+      } finally {
+        lockedDisks.remove(targetDisk.path);
+      }
+    }();
+
+    return IOWriter(sink: process.stdin, guard: guard);
   }
 
   @override
