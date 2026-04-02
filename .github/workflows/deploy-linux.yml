@@ -62,6 +62,8 @@ jobs:
             squashfs-tools \
             strace \
             util-linux \
+            build-essential \
+            libgtk-3-dev
             zsync
           python3 -m pip install --user --upgrade pip
           python3 -m pip install --user appimage-builder
