@@ -1,0 +1,32 @@
+name: Verify
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Flutter
+        uses: flutter-actions/setup-flutter@v4
+        with:
+          channel: stable
+          version: 3.38.7
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Check code formatting
+        run: dart format -o none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test

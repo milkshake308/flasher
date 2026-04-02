@@ -1,0 +1,28 @@
+name: Flasher Deploy (release)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  prepare-tag:
+    uses: ./.github/workflows/prepare-tag.yml
+    with:
+      release_tag: ${{ github.ref_name }}
+
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  deploy-linux:
+    uses: ./.github/workflows/deploy-linux.yml
+    with:
+      tag: ${{ needs.prepare-tag.outputs.tag }}
+      publish_mode: release
+      environment_name: release
+    permissions:
+      contents: write
+    needs: [prepare-tag, verify]

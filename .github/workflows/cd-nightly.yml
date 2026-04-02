@@ -1,0 +1,28 @@
+name: Flasher Deploy (nightly)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  prepare-tag:
+    uses: .github/workflows/prepare-tag.yml
+
+  verify:
+    uses: .github/workflows/verify.yml
+
+  deploy-linux:
+    uses: .github/workflows/deploy-linux.yml
+    with:
+      tag: ${{ needs.prepare-tag.outputs.tag }}
+      publish_mode: artifact
+      artifact_retention_days: 30
+      environment_name: nightly
+    permissions:
+      contents: read
+    needs: [prepare-tag, verify]

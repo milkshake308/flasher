@@ -1,0 +1,136 @@
+name: Deploy Linux
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      publish_mode:
+        required: true
+        type: string
+      artifact_retention_days:
+        required: false
+        default: 30
+        type: number
+      environment_name:
+        required: true
+        type: string
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment_name }}
+    steps:
+      - name: Validate publish mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ inputs.publish_mode }}" in
+            artifact|release) ;;
+            *)
+              echo "Unsupported publish_mode: ${{ inputs.publish_mode }}"
+              exit 1
+              ;;
+          esac
+
+      - uses: actions/checkout@v5
+
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v4
+        with:
+          channel: stable
+          # Match from https://docs.flutter.dev/install/archive
+          version: 3.38.7
+          cache: true
+
+      - name: Setup AppImage tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            binutils \
+            coreutils \
+            desktop-file-utils \
+            fakeroot \
+            fuse \
+            libgdk-pixbuf2.0-dev \
+            patchelf \
+            python3-pip \
+            python3-setuptools \
+            squashfs-tools \
+            strace \
+            util-linux \
+            zsync
+          python3 -m pip install --user --upgrade pip
+          python3 -m pip install --user appimage-builder
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
+          sudo chmod +x /usr/local/bin/appimagetool
+
+      - name: Fetch Dependencies
+        run: flutter pub get
+
+      - name: Build Linux bundle
+        run: flutter build linux --release --dart-define=FLASHER_BUILD_TAG=${{ inputs.tag }}
+
+      - name: Generate CI AppImage recipe
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp linux/AppImageBuilder.yml "$RUNNER_TEMP/AppImageBuilder.ci.yml"
+          sed -i "s/^    version: .*/    version: ${{ inputs.tag }}/" "$RUNNER_TEMP/AppImageBuilder.ci.yml"
+
+      - name: Build AppImage
+        run: appimage-builder --build-dir=build/appimage-build --recipe "$RUNNER_TEMP/AppImageBuilder.ci.yml"
+
+      - name: Prepare distributable artifacts
+        id: dist
+        shell: bash
+        run: |
+          set -euo pipefail
+          APPIMAGE_FILE="$(find . -maxdepth 1 -type f -name '*.AppImage' | head -n 1)"
+          if [[ -z "${APPIMAGE_FILE}" ]]; then
+            echo "No AppImage was produced"
+            exit 1
+          fi
+
+          ZSYNC_FILE="${APPIMAGE_FILE}.zsync"
+          if [[ ! -f "${ZSYNC_FILE}" ]]; then
+            ZSYNC_FILE="$(find . -maxdepth 1 -type f -name '*.AppImage.zsync' | head -n 1)"
+          fi
+          if [[ -z "${ZSYNC_FILE}" || ! -f "${ZSYNC_FILE}" ]]; then
+            echo "No .zsync file was produced"
+            exit 1
+          fi
+
+          mkdir -p dist
+          cp "${APPIMAGE_FILE}" dist/
+          cp "${ZSYNC_FILE}" dist/
+          (
+            cd dist
+            sha256sum "$(basename "${APPIMAGE_FILE}")" "$(basename "${ZSYNC_FILE}")" > SHA256SUMS
+          )
+
+      - name: Upload nightly artifacts
+        if: ${{ inputs.publish_mode == 'artifact' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: flasher-linux-${{ inputs.tag }}
+          path: |
+            dist/*.AppImage
+            dist/*.AppImage.zsync
+            dist/SHA256SUMS
+          retention-days: ${{ inputs.artifact_retention_days }}
+          if-no-files-found: error
+
+      - name: Upload release assets
+        if: ${{ inputs.publish_mode == 'release' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          files: |
+            dist/*.AppImage
+            dist/*.AppImage.zsync
+            dist/SHA256SUMS
